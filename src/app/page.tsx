@@ -336,7 +336,7 @@ export default function HomePage() {
                   ))}
                 </div>
                 <p className="text-muted-foreground italic leading-relaxed">
-                  "{testimonial.content}"
+                  &quot;{testimonial.content}&quot;
                 </p>
               </div>
             ))}
@@ -377,7 +377,7 @@ export default function HomePage() {
               </h4>
               <p className="text-muted-foreground">
                 Use our mobile app or web dashboard to record health data, track
-                movements, and monitor your flock's progress.
+                movements, and monitor your flock&apos;s progress.
               </p>
             </div>
             <div className="text-center">
@@ -389,7 +389,7 @@ export default function HomePage() {
               </h4>
               <p className="text-muted-foreground">
                 Review detailed reports and analytics to make data-driven
-                decisions that improve your farm's productivity.
+                decisions that improve your farm&apos;s productivity.
               </p>
             </div>
           </div>
