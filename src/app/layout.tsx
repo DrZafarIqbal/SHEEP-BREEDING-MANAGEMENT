@@ -27,12 +27,7 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning>
-        <body className={` antialiased`}>
-          <header className="p-4 border-b">
-            <nav className="flex items-center justify-between"></nav>
-          </header>
-          {children}
-        </body>
+        <body className={` antialiased`}>{children}</body>
       </html>
     </ClerkProvider>
   );

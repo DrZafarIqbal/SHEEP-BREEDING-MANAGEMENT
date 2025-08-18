@@ -5,17 +5,24 @@ import {
 } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-const isProtectedRoute = createRouteMatcher([
-  "/farm(.*)",
-  "/admin(.*)",
-  "/auth(.*)",
-]);
+const isProtectedRoute = createRouteMatcher(["/farm(.*)", "/admin(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
   const { userId } = await auth();
+  const path = req.nextUrl.pathname;
 
-  // Allow unauthenticated access to auth routes
-  if (req.nextUrl.pathname.startsWith("/auth/")) {
+  if (userId && (path === "/" || path.startsWith("/auth/"))) {
+    const user = await (await clerkClient()).users.getUser(userId);
+    const userRole = user.publicMetadata.role;
+
+    if (userRole === "admin") {
+      return NextResponse.redirect(new URL("/admin/dashboard", req.url));
+    } else {
+      return NextResponse.redirect(new URL("/farm/dashboard", req.url));
+    }
+  }
+
+  if (!userId && (path === "/" || path.startsWith("/auth/"))) {
     return NextResponse.next();
   }
 
@@ -24,19 +31,14 @@ export default clerkMiddleware(async (auth, req) => {
   }
 
   const user = await (await clerkClient()).users.getUser(userId);
-  const path = req.nextUrl.pathname;
   const userRole = user.publicMetadata.role;
 
-  console.log(`Path: ${path}, Role: ${userRole}`);
-
   if (isProtectedRoute(req)) {
-    // Non-admin trying to access admin routes - redirect to farm
     if (path.startsWith("/admin") && userRole !== "admin") {
       console.log("Redirecting non-admin from admin to farm");
       return NextResponse.redirect(new URL("/farm/dashboard", req.url));
     }
 
-    // Admin trying to access farm routes - redirect to admin (but not if already on admin dashboard)
     if (
       path.startsWith("/farm") &&
       userRole === "admin" &&
@@ -46,7 +48,6 @@ export default clerkMiddleware(async (auth, req) => {
       return NextResponse.redirect(new URL("/admin/dashboard", req.url));
     }
 
-    // Handle users without a role - default to farm (but not if already on farm dashboard)
     if (!userRole && path !== "/farm/dashboard") {
       console.log("Redirecting user without role to farm");
       return NextResponse.redirect(new URL("/farm/dashboard", req.url));
