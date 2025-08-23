@@ -29,7 +29,7 @@ export function SheepForm({ onSubmit, onCancel }: SheepFormProps) {
   const [formData, setFormData] = useState({
     tag_number: "",
     branding_id: "",
-    branding_date: "",
+    branding_date: null,
     gender: "",
     breed: "",
     dob: "",
