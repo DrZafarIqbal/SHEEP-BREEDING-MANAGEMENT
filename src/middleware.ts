@@ -25,7 +25,7 @@ export default clerkMiddleware(async (auth, req) => {
   if (!userId && (path === "/" || path.startsWith("/auth/"))) {
     return NextResponse.next();
   }
-
+  console.log(userId);
   if (!userId) {
     return NextResponse.redirect(new URL("/auth/signin", req.url));
   }
