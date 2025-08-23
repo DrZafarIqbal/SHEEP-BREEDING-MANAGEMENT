@@ -13,7 +13,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Trash2, Plus, ChevronLeft, ChevronRight, Eye } from "lucide-react";
+import {
+  Trash2,
+  Plus,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  Edit,
+} from "lucide-react";
 
 interface SheepListProps {
   sheep: any[];
@@ -22,6 +29,7 @@ interface SheepListProps {
   totalPages: number;
   totalCount: number;
   onAddSheep: () => void;
+  onEditSheep: (id: string) => void;
   onDeleteSheep: (id: string) => void;
   onSheepClick: (id: string) => void;
   onPageChange: (page: number) => void;
@@ -34,6 +42,7 @@ export function SheepList({
   totalPages,
   totalCount,
   onAddSheep,
+  onEditSheep,
   onDeleteSheep,
   onSheepClick,
   onPageChange,
@@ -60,7 +69,18 @@ export function SheepList({
 
   const handleDeleteClick = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    onDeleteSheep(id);
+    if (
+      window.confirm(
+        "Are you sure you want to delete this sheep? This action cannot be undone."
+      )
+    ) {
+      onDeleteSheep(id);
+    }
+  };
+
+  const handleEditClick = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    onEditSheep(id);
   };
 
   const handleViewClick = (e: React.MouseEvent, id: string) => {
@@ -180,20 +200,31 @@ export function SheepList({
                       </TableCell>
 
                       <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center justify-end gap-1">
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={(e) => handleViewClick(e, animal.id)}
-                            className="h-8 w-8 p-0 text-blue-600 hover:text-blue-800"
+                            className="h-8 w-8 p-0 text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                            title="View Details"
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
+                            onClick={(e) => handleEditClick(e, animal.id)}
+                            className="h-8 w-8 p-0 text-orange-600 hover:text-orange-800 hover:bg-orange-50"
+                            title="Edit Sheep"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={(e) => handleDeleteClick(e, animal.id)}
-                            className="h-8 w-8 p-0 text-red-600 hover:text-red-800"
+                            className="h-8 w-8 p-0 text-red-600 hover:text-red-800 hover:bg-red-50"
+                            title="Delete Sheep"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>

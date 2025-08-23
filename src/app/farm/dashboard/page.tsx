@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { SheepForm } from "@/components/sheep-form";
 import { SheepList } from "@/components/sheep-list";
+import { SheepForm } from "@/components/sheep-form";
 import { getSheep, deleteSheep } from "@/lib/api/sheep-api";
 import { useAuth } from "@clerk/nextjs";
 import { loadCounts } from "@/lib/api/counts-api";
@@ -68,11 +68,15 @@ export default function FarmDashboardPage() {
   };
 
   const handleSheepClick = (sheepId: string) => {
-    router.push(`/farm/dashboard/sheep/${sheepId}`);
+    router.push(`farm/sheep/${sheepId}`);
   };
 
   const handlePageChange = (page: number) => {
     loadSheep(page);
+  };
+
+  const handleEditSheep = (id: string) => {
+    console.log("edit");
   };
 
   return (
@@ -122,6 +126,7 @@ export default function FarmDashboardPage() {
           onDeleteSheep={handleDeleteSheep}
           onSheepClick={handleSheepClick}
           onPageChange={handlePageChange}
+          onEditSheep={handleEditSheep}
         />
       )}
     </div>
