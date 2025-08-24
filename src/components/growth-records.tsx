@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { HealthRecordForm } from "./health-record-form";
+import { GrowthRecordForm } from './farm/growth-record-form';
 import {
-  getHealthRecords,
-  addHealthRecord,
-  updateHealthRecord,
-  deleteHealthRecord,
-} from "@/lib/api/health-records-api";
+  getGrowthRecords,
+  addGrowthRecord,
+  updateGrowthRecord,
+  deleteGrowthRecord,
+} from '@/lib/api/growth-records-api';
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -38,48 +38,44 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Plus, Edit, Trash2 } from "lucide-react";
 
-export function HealthRecords({ sheepId }: { sheepId: string }) {
+export function GrowthRecords({ sheepId }: { sheepId: string }) {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<any>(null);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["healthRecords", sheepId, page],
-    queryFn: () => getHealthRecords(sheepId),
+    queryKey: ['growthRecords', sheepId, page],
+    queryFn: () => getGrowthRecords(sheepId),
   });
 
   const addRecordMutation = useMutation({
-    mutationFn: addHealthRecord,
+    mutationFn: addGrowthRecord,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["healthRecords", sheepId] });
+      queryClient.invalidateQueries({ queryKey: ['growthRecords', sheepId] });
       setIsDialogOpen(false);
     },
   });
 
   const updateRecordMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) =>
-      updateHealthRecord(id, data),
+    mutationFn: ({ id, data }: { id: string; data: any }) => updateGrowthRecord(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["healthRecords", sheepId] });
+      queryClient.invalidateQueries({ queryKey: ['growthRecords', sheepId] });
       setIsDialogOpen(false);
       setEditingRecord(null);
     },
   });
 
   const deleteRecordMutation = useMutation({
-    mutationFn: deleteHealthRecord,
+    mutationFn: deleteGrowthRecord,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["healthRecords", sheepId] });
+      queryClient.invalidateQueries({ queryKey: ['growthRecords', sheepId] });
     },
   });
 
   const handleFormSubmit = (formData: any) => {
     if (editingRecord) {
-      updateRecordMutation.mutate({
-        id: editingRecord.id,
-        data: { ...formData, sheep_id: sheepId },
-      });
+      updateRecordMutation.mutate({ id: editingRecord.id, data: { ...formData, sheep_id: sheepId } });
     } else {
       addRecordMutation.mutate({ ...formData, sheep_id: sheepId });
     }
@@ -98,7 +94,7 @@ export function HealthRecords({ sheepId }: { sheepId: string }) {
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold">Health Records</h2>
+        <h2 className="text-2xl font-bold">Growth Records</h2>
         <Button onClick={openDialogForAdd}>
           <Plus className="mr-2 h-4 w-4" /> Add Record
         </Button>
@@ -107,11 +103,9 @@ export function HealthRecords({ sheepId }: { sheepId: string }) {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {editingRecord ? "Edit" : "Add"} Health Record
-            </DialogTitle>
+            <DialogTitle>{editingRecord ? 'Edit' : 'Add'} Growth Record</DialogTitle>
           </DialogHeader>
-          <HealthRecordForm
+          <GrowthRecordForm
             sheepId={sheepId}
             record={editingRecord}
             onSubmit={handleFormSubmit}
@@ -126,26 +120,18 @@ export function HealthRecords({ sheepId }: { sheepId: string }) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Event Date</TableHead>
-              <TableHead>Event Type</TableHead>
-              <TableHead>Description</TableHead>
+              <TableHead>Age (days)</TableHead>
+              <TableHead>Body Weight (kg)</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {data?.map((record: any) => (
               <TableRow key={record.id}>
+                <TableCell>{record.age_days}</TableCell>
+                <TableCell>{record.body_weight}</TableCell>
                 <TableCell>
-                  {new Date(record.event_date).toLocaleDateString()}
-                </TableCell>
-                <TableCell>{record.event_type}</TableCell>
-                <TableCell>{record.description}</TableCell>
-                <TableCell>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => openDialogForEdit(record)}
-                  >
+                  <Button variant="ghost" size="icon" onClick={() => openDialogForEdit(record)}>
                     <Edit className="h-4 w-4" />
                   </Button>
                   <AlertDialog>
@@ -158,15 +144,12 @@ export function HealthRecords({ sheepId }: { sheepId: string }) {
                       <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This action cannot be undone. This will permanently
-                          delete the health record.
+                          This action cannot be undone. This will permanently delete the growth record.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => deleteRecordMutation.mutate(record.id)}
-                        >
+                        <AlertDialogAction onClick={() => deleteRecordMutation.mutate(record.id)}>
                           Delete
                         </AlertDialogAction>
                       </AlertDialogFooter>

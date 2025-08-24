@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { HealthRecordForm } from "./health-record-form";
+import { TransferRecordForm } from "./transfer-record-form";
 import {
-  getHealthRecords,
-  addHealthRecord,
-  updateHealthRecord,
-  deleteHealthRecord,
-} from "@/lib/api/health-records-api";
+  getTransferRecords,
+  addTransferRecord,
+  updateTransferRecord,
+  deleteTransferRecord,
+} from "@/lib/api/transfer-records-api";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -37,51 +37,78 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Plus, Edit, Trash2 } from "lucide-react";
+import { useAuth } from "@clerk/nextjs";
+import { getFarms, updateSheep } from "@/lib/api/sheep-api";
 
-export function HealthRecords({ sheepId }: { sheepId: string }) {
+export function TransferRecords({ sheepId }: { sheepId: string }) {
   const queryClient = useQueryClient();
+  const { userId } = useAuth();
   const [page, setPage] = useState(1);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<any>(null);
+  const [filter, setFilter] = useState<"all" | "from" | "to">("all");
+  const { data: farms, isLoading: isLoadingFarms } = useQuery({
+    queryKey: ["farms"],
+    queryFn: getFarms,
+  });
 
+  const currentFarm = farms?.find((farm: any) => farm.id === userId);
   const { data, isLoading } = useQuery({
-    queryKey: ["healthRecords", sheepId, page],
-    queryFn: () => getHealthRecords(sheepId),
+    queryKey: ["transferRecords", sheepId, page, filter],
+    queryFn: () =>
+      getTransferRecords(
+        sheepId,
+        currentFarm?.id,
+        filter === "all" ? undefined : filter
+      ),
   });
 
   const addRecordMutation = useMutation({
-    mutationFn: addHealthRecord,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["healthRecords", sheepId] });
+    mutationFn: addTransferRecord,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["transferRecords", sheepId] });
       setIsDialogOpen(false);
+      // Update sheep's farm_id
+      updateSheepMutation.mutate({ id: sheepId, farm_id: data[0].to });
     },
   });
 
   const updateRecordMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) =>
-      updateHealthRecord(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["healthRecords", sheepId] });
+      updateTransferRecord(id, data),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["transferRecords", sheepId] });
       setIsDialogOpen(false);
       setEditingRecord(null);
+      // Update sheep's farm_id
+      updateSheepMutation.mutate({ id: sheepId, farm_id: data[0].to });
     },
   });
 
   const deleteRecordMutation = useMutation({
-    mutationFn: deleteHealthRecord,
+    mutationFn: deleteTransferRecord,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["healthRecords", sheepId] });
+      queryClient.invalidateQueries({ queryKey: ["transferRecords", sheepId] });
+    },
+  });
+
+  const updateSheepMutation = useMutation({
+    mutationFn: updateSheep,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sheep", sheepId] });
     },
   });
 
   const handleFormSubmit = (formData: any) => {
+    const data = {
+      ...formData,
+      sheep_id: sheepId,
+      from: currentFarm?.id,
+    };
     if (editingRecord) {
-      updateRecordMutation.mutate({
-        id: editingRecord.id,
-        data: { ...formData, sheep_id: sheepId },
-      });
+      updateRecordMutation.mutate({ id: editingRecord.id, data });
     } else {
-      addRecordMutation.mutate({ ...formData, sheep_id: sheepId });
+      addRecordMutation.mutate(data);
     }
   };
 
@@ -98,20 +125,40 @@ export function HealthRecords({ sheepId }: { sheepId: string }) {
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold">Health Records</h2>
-        <Button onClick={openDialogForAdd}>
-          <Plus className="mr-2 h-4 w-4" /> Add Record
-        </Button>
+        <h2 className="text-2xl font-bold">Transfer Records</h2>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => setFilter("all")}
+            variant={filter === "all" ? "secondary" : "outline"}
+          >
+            All
+          </Button>
+          <Button
+            onClick={() => setFilter("from")}
+            variant={filter === "from" ? "secondary" : "outline"}
+          >
+            Transferred From
+          </Button>
+          <Button
+            onClick={() => setFilter("to")}
+            variant={filter === "to" ? "secondary" : "outline"}
+          >
+            Transferred To
+          </Button>
+          <Button onClick={openDialogForAdd}>
+            <Plus className="mr-2 h-4 w-4" /> Add Record
+          </Button>
+        </div>
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {editingRecord ? "Edit" : "Add"} Health Record
+              {editingRecord ? "Edit" : "Add"} Transfer Record
             </DialogTitle>
           </DialogHeader>
-          <HealthRecordForm
+          <TransferRecordForm
             sheepId={sheepId}
             record={editingRecord}
             onSubmit={handleFormSubmit}
@@ -126,9 +173,10 @@ export function HealthRecords({ sheepId }: { sheepId: string }) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Event Date</TableHead>
-              <TableHead>Event Type</TableHead>
-              <TableHead>Description</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead>From</TableHead>
+              <TableHead>To</TableHead>
+              <TableHead>Reason</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -136,10 +184,11 @@ export function HealthRecords({ sheepId }: { sheepId: string }) {
             {data?.map((record: any) => (
               <TableRow key={record.id}>
                 <TableCell>
-                  {new Date(record.event_date).toLocaleDateString()}
+                  {new Date(record.date).toLocaleDateString()}
                 </TableCell>
-                <TableCell>{record.event_type}</TableCell>
-                <TableCell>{record.description}</TableCell>
+                <TableCell>{record.from_farm.name}</TableCell>
+                <TableCell>{record.to_farm.name}</TableCell>
+                <TableCell>{record.reason}</TableCell>
                 <TableCell>
                   <Button
                     variant="ghost"
@@ -159,7 +208,7 @@ export function HealthRecords({ sheepId }: { sheepId: string }) {
                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                         <AlertDialogDescription>
                           This action cannot be undone. This will permanently
-                          delete the health record.
+                          delete the transfer record.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>

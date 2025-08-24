@@ -49,7 +49,7 @@ export function SheepDetail({ sheep }: any) {
   };
 
   return (
-    <Card className={sheep.dead ? "border-red-200 bg-red-50" : ""}>
+    <Card className={sheep.dead ? "border-red-200 bg-red-50" : "bg-white"}>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-3">

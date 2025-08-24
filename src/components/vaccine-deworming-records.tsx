@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { HealthRecordForm } from "./health-record-form";
+import { VaccineDewormingForm } from "./farm/vaccine-deworming-form";
 import {
-  getHealthRecords,
-  addHealthRecord,
-  updateHealthRecord,
-  deleteHealthRecord,
-} from "@/lib/api/health-records-api";
+  getVaccineDewormingRecords,
+  addVaccineDewormingRecord,
+  updateVaccineDewormingRecord,
+  deleteVaccineDewormingRecord,
+} from "@/lib/api/vaccine-deworming-api";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -38,39 +38,50 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Plus, Edit, Trash2 } from "lucide-react";
 
-export function HealthRecords({ sheepId }: { sheepId: string }) {
+export function VaccineDewormingRecords({ sheepId }: { sheepId: string }) {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<any>(null);
+  const [filter, setFilter] = useState<"all" | "vaccine" | "deworming">("all");
 
   const { data, isLoading } = useQuery({
-    queryKey: ["healthRecords", sheepId, page],
-    queryFn: () => getHealthRecords(sheepId),
+    queryKey: ["vaccineDewormingRecords", sheepId, page, filter],
+    queryFn: () =>
+      getVaccineDewormingRecords(
+        sheepId,
+        filter === "all" ? undefined : filter
+      ),
   });
 
   const addRecordMutation = useMutation({
-    mutationFn: addHealthRecord,
+    mutationFn: addVaccineDewormingRecord,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["healthRecords", sheepId] });
+      queryClient.invalidateQueries({
+        queryKey: ["vaccineDewormingRecords", sheepId],
+      });
       setIsDialogOpen(false);
     },
   });
 
   const updateRecordMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) =>
-      updateHealthRecord(id, data),
+      updateVaccineDewormingRecord(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["healthRecords", sheepId] });
+      queryClient.invalidateQueries({
+        queryKey: ["vaccineDewormingRecords", sheepId],
+      });
       setIsDialogOpen(false);
       setEditingRecord(null);
     },
   });
 
   const deleteRecordMutation = useMutation({
-    mutationFn: deleteHealthRecord,
+    mutationFn: deleteVaccineDewormingRecord,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["healthRecords", sheepId] });
+      queryClient.invalidateQueries({
+        queryKey: ["vaccineDewormingRecords", sheepId],
+      });
     },
   });
 
@@ -98,20 +109,38 @@ export function HealthRecords({ sheepId }: { sheepId: string }) {
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold">Health Records</h2>
-        <Button onClick={openDialogForAdd}>
-          <Plus className="mr-2 h-4 w-4" /> Add Record
-        </Button>
+        <h2 className="text-2xl font-bold">Vaccine & Deworming Records</h2>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => setFilter("all")}
+            variant={filter === "all" ? "secondary" : "outline"}
+          >
+            All
+          </Button>
+          <Button
+            onClick={() => setFilter("vaccine")}
+            variant={filter === "vaccine" ? "secondary" : "outline"}
+          >
+            Vaccines
+          </Button>
+          <Button
+            onClick={() => setFilter("deworming")}
+            variant={filter === "deworming" ? "secondary" : "outline"}
+          >
+            Deworming
+          </Button>
+          <Button onClick={openDialogForAdd}>
+            <Plus className="mr-2 h-4 w-4" /> Add Record
+          </Button>
+        </div>
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {editingRecord ? "Edit" : "Add"} Health Record
-            </DialogTitle>
+            <DialogTitle>{editingRecord ? "Edit" : "Add"} Record</DialogTitle>
           </DialogHeader>
-          <HealthRecordForm
+          <VaccineDewormingForm
             sheepId={sheepId}
             record={editingRecord}
             onSubmit={handleFormSubmit}
@@ -126,20 +155,22 @@ export function HealthRecords({ sheepId }: { sheepId: string }) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Event Date</TableHead>
-              <TableHead>Event Type</TableHead>
-              <TableHead>Description</TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead>Dose</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead>Type</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {data?.map((record: any) => (
               <TableRow key={record.id}>
+                <TableCell>{record.name}</TableCell>
+                <TableCell>{record.dose}</TableCell>
                 <TableCell>
-                  {new Date(record.event_date).toLocaleDateString()}
+                  {new Date(record.date).toLocaleDateString()}
                 </TableCell>
-                <TableCell>{record.event_type}</TableCell>
-                <TableCell>{record.description}</TableCell>
+                <TableCell>{record.type}</TableCell>
                 <TableCell>
                   <Button
                     variant="ghost"
@@ -159,7 +190,7 @@ export function HealthRecords({ sheepId }: { sheepId: string }) {
                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                         <AlertDialogDescription>
                           This action cannot be undone. This will permanently
-                          delete the health record.
+                          delete the record.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>

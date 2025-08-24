@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { SheepList } from "@/components/sheep-list";
-import { SheepForm } from "@/components/sheep-form";
+import { SheepForm } from "@/components/farm/sheep-form";
 import { useAuth } from "@clerk/nextjs";
 import { loadCounts } from "@/lib/api/counts-api";
 
@@ -58,7 +58,7 @@ export default function FarmDashboardPage() {
         <CardHeader>
           <CardTitle>Farm Dashboard</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="bg-white">
           <p className="text-muted-foreground mb-4">
             Manage your sheep inventory and track important information.
           </p>

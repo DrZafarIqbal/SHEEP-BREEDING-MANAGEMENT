@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { HealthRecordForm } from "./health-record-form";
+import { WoolRecordForm } from "./wool-record-form";
 import {
-  getHealthRecords,
-  addHealthRecord,
-  updateHealthRecord,
-  deleteHealthRecord,
-} from "@/lib/api/health-records-api";
+  getWoolRecords,
+  addWoolRecord,
+  updateWoolRecord,
+  deleteWoolRecord,
+} from "@/lib/api/wool-records-api";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -38,39 +38,39 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Plus, Edit, Trash2 } from "lucide-react";
 
-export function HealthRecords({ sheepId }: { sheepId: string }) {
+export function WoolRecords({ sheepId }: { sheepId: string }) {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<any>(null);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["healthRecords", sheepId, page],
-    queryFn: () => getHealthRecords(sheepId),
+    queryKey: ["woolRecords", sheepId, page],
+    queryFn: () => getWoolRecords(sheepId),
   });
 
   const addRecordMutation = useMutation({
-    mutationFn: addHealthRecord,
+    mutationFn: addWoolRecord,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["healthRecords", sheepId] });
+      queryClient.invalidateQueries({ queryKey: ["woolRecords", sheepId] });
       setIsDialogOpen(false);
     },
   });
 
   const updateRecordMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) =>
-      updateHealthRecord(id, data),
+      updateWoolRecord(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["healthRecords", sheepId] });
+      queryClient.invalidateQueries({ queryKey: ["woolRecords", sheepId] });
       setIsDialogOpen(false);
       setEditingRecord(null);
     },
   });
 
   const deleteRecordMutation = useMutation({
-    mutationFn: deleteHealthRecord,
+    mutationFn: deleteWoolRecord,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["healthRecords", sheepId] });
+      queryClient.invalidateQueries({ queryKey: ["woolRecords", sheepId] });
     },
   });
 
@@ -98,7 +98,7 @@ export function HealthRecords({ sheepId }: { sheepId: string }) {
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold">Health Records</h2>
+        <h2 className="text-2xl font-bold">Wool Records</h2>
         <Button onClick={openDialogForAdd}>
           <Plus className="mr-2 h-4 w-4" /> Add Record
         </Button>
@@ -108,10 +108,10 @@ export function HealthRecords({ sheepId }: { sheepId: string }) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {editingRecord ? "Edit" : "Add"} Health Record
+              {editingRecord ? "Edit" : "Add"} Wool Record
             </DialogTitle>
           </DialogHeader>
-          <HealthRecordForm
+          <WoolRecordForm
             sheepId={sheepId}
             record={editingRecord}
             onSubmit={handleFormSubmit}
@@ -126,20 +126,24 @@ export function HealthRecords({ sheepId }: { sheepId: string }) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Event Date</TableHead>
-              <TableHead>Event Type</TableHead>
-              <TableHead>Description</TableHead>
+              <TableHead>Greasy Fleece Yield</TableHead>
+              <TableHead>Clean Fleece Yield</TableHead>
+              <TableHead>Staple Length</TableHead>
+              <TableHead>Fibre Diameter</TableHead>
+              <TableHead>Medullation (%)</TableHead>
+              <TableHead>Crimps</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {data?.map((record: any) => (
               <TableRow key={record.id}>
-                <TableCell>
-                  {new Date(record.event_date).toLocaleDateString()}
-                </TableCell>
-                <TableCell>{record.event_type}</TableCell>
-                <TableCell>{record.description}</TableCell>
+                <TableCell>{record.greasy_fleece_yield}</TableCell>
+                <TableCell>{record.clean_fleece_yield}</TableCell>
+                <TableCell>{record.staple_length}</TableCell>
+                <TableCell>{record.fibre_diameter}</TableCell>
+                <TableCell>{record.medullation_percent}</TableCell>
+                <TableCell>{record.crimps}</TableCell>
                 <TableCell>
                   <Button
                     variant="ghost"
@@ -159,7 +163,7 @@ export function HealthRecords({ sheepId }: { sheepId: string }) {
                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                         <AlertDialogDescription>
                           This action cannot be undone. This will permanently
-                          delete the health record.
+                          delete the wool record.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>

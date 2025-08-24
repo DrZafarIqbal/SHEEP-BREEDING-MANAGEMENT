@@ -5,6 +5,7 @@ import {
   getSheepById,
   createSheep,
   updateSheep,
+  fetchTransferredSheepFromUser,
   deleteSheep,
 } from "../api/sheep-api";
 import { toast } from "sonner";
@@ -68,10 +69,23 @@ export const useDeleteSheep = () => {
     mutationFn: deleteSheep,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sheep"] });
+
       toast.success("Sheep deleted successfully.");
     },
     onError: (error: any) => {
       toast.error(error.message);
     },
+  });
+};
+
+export const useTransferredSheep = (
+  page: number,
+  limit: number,
+  userId: string
+) => {
+  return useQuery({
+    queryKey: ["transferredSheep", page, limit, userId],
+    queryFn: () => fetchTransferredSheepFromUser(userId, page, limit),
+    enabled: !!userId,
   });
 };

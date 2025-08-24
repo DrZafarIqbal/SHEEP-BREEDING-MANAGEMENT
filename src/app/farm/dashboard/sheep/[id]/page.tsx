@@ -3,9 +3,10 @@
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { SheepDetail } from "@/components/sheep-detail";
-// import { RecordTabs } from "@/components/record-tabs";
+import { SheepDetail } from "@/components/farm/sheep-detail";
+import { RecordTabs } from "@/components/farm/record-tabs";
 import { useSheepById } from "@/lib/hooks/use-sheep";
+import { Card } from "@/components/ui/card";
 
 export default function SheepDetailPage() {
   const params = useParams();
@@ -60,7 +61,9 @@ export default function SheepDetailPage() {
       </div>
 
       <SheepDetail sheep={sheep} />
-      {/* <RecordTabs sheepId={sheepId} /> */}
+      <Card className="px-6 bg-white">
+        <RecordTabs sheepId={sheepId} />
+      </Card>
     </div>
   );
 }

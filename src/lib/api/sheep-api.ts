@@ -62,3 +62,37 @@ export const deleteSheep = async (id: string) => {
   if (error) throw new Error(error.message);
   return data;
 };
+
+export const getFarms = async () => {
+  const { data, error } = await supabase.from("farm").select("id, name");
+  if (error) throw new Error(error.message);
+  return data || [];
+};
+
+export const fetchTransferredSheepFromUser = async (
+  userId: string,
+  page = 1,
+  limit = 10
+) => {
+  const offset = (page - 1) * limit;
+  const { data, error, count } = await supabase
+    .from("sheep")
+    .select(
+      `
+      *,
+      transfers!inner(
+        from
+      )
+    `,
+      { count: "exact" }
+    )
+    .eq("transfers.from", userId)
+    .range(offset, offset + limit - 1);
+
+  if (error) throw new Error(error.message);
+  return {
+    sheep: data || [],
+    totalCount: count || 0,
+    totalPages: Math.ceil((count || 0) / limit),
+  };
+};
