@@ -5,40 +5,20 @@ import { useRouter } from "next/navigation";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { SheepList } from "@/components/sheep-list";
 import { SheepForm } from "@/components/sheep-form";
-import { getSheep, deleteSheep } from "@/lib/api/sheep-api";
 import { useAuth } from "@clerk/nextjs";
 import { loadCounts } from "@/lib/api/counts-api";
 
 export default function FarmDashboardPage() {
-  const [sheep, setSheep] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
+  const [selectedSheepId, setSelectedSheepId] = useState<string | undefined>(
+    undefined
+  );
   const [sheepCount, setSheepCount] = useState(0);
   const [transferCount, setTransferCount] = useState(0);
   const [recievedCount, setRecievedCount] = useState(0);
 
   const router = useRouter();
   const { userId } = useAuth();
-
-  const ITEMS_PER_PAGE = 10;
-
-  const loadSheep = async (page = 1) => {
-    try {
-      setLoading(true);
-      const result: any = await getSheep(page, ITEMS_PER_PAGE, userId);
-      setSheep(result.sheep);
-      setTotalPages(result.totalPages);
-      setTotalCount(result.totalCount);
-      setCurrentPage(page);
-    } catch (error) {
-      console.error("Failed to load sheep:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
     if (!userId) {
@@ -50,33 +30,26 @@ export default function FarmDashboardPage() {
       setTransferCount(counts.transferCount ?? 0);
       setRecievedCount(counts.recievedCount ?? 0);
     })();
-    loadSheep();
   }, [userId]);
 
-  const handleSheepAdded = () => {
+  const handleFormSuccess = () => {
     setShowForm(false);
-    loadSheep(currentPage);
+    setSelectedSheepId(undefined);
   };
 
-  const handleDeleteSheep = async (id: string) => {
-    try {
-      await deleteSheep(id);
-      loadSheep(currentPage);
-    } catch (error) {
-      console.error("Failed to delete sheep:", error);
-    }
-  };
-
-  const handleSheepClick = (sheepId: string) => {
-    router.push(`farm/sheep/${sheepId}`);
-  };
-
-  const handlePageChange = (page: number) => {
-    loadSheep(page);
+  const handleAddSheep = () => {
+    setSelectedSheepId(undefined);
+    setShowForm(true);
   };
 
   const handleEditSheep = (id: string) => {
-    console.log("edit");
+    setSelectedSheepId(id);
+    setShowForm(true);
+  };
+
+  const handleSheepClick = (sheepId: string) => {
+    console.log("clicked");
+    router.push(`/farm/dashboard/sheep/${sheepId}`);
   };
 
   return (
@@ -112,21 +85,15 @@ export default function FarmDashboardPage() {
 
       {showForm ? (
         <SheepForm
-          onSubmit={handleSheepAdded}
+          sheepId={selectedSheepId}
+          onSuccess={handleFormSuccess}
           onCancel={() => setShowForm(false)}
         />
       ) : (
         <SheepList
-          sheep={sheep}
-          loading={loading}
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalCount={totalCount}
-          onAddSheep={() => setShowForm(true)}
-          onDeleteSheep={handleDeleteSheep}
-          onSheepClick={handleSheepClick}
-          onPageChange={handlePageChange}
+          onAddSheep={handleAddSheep}
           onEditSheep={handleEditSheep}
+          onSheepClick={handleSheepClick}
         />
       )}
     </div>

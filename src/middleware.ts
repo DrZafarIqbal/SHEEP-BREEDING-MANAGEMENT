@@ -25,32 +25,33 @@ export default clerkMiddleware(async (auth, req) => {
   if (!userId && (path === "/" || path.startsWith("/auth/"))) {
     return NextResponse.next();
   }
-  console.log(userId);
+
   if (!userId) {
     return NextResponse.redirect(new URL("/auth/signin", req.url));
   }
 
-  const user = await (await clerkClient()).users.getUser(userId);
-  const userRole = user.publicMetadata.role;
-
   if (isProtectedRoute(req)) {
-    if (path.startsWith("/admin") && userRole !== "admin") {
-      console.log("Redirecting non-admin from admin to farm");
-      return NextResponse.redirect(new URL("/farm/dashboard", req.url));
-    }
+    const user = await (await clerkClient()).users.getUser(userId);
+    const userRole = user.publicMetadata.role;
 
-    if (
-      path.startsWith("/farm") &&
-      userRole === "admin" &&
-      path !== "/admin/dashboard"
-    ) {
-      console.log("Redirecting admin from farm to admin");
-      return NextResponse.redirect(new URL("/admin/dashboard", req.url));
-    }
+    if (isProtectedRoute(req)) {
+      const user = await (await clerkClient()).users.getUser(userId);
+      const userRole = user.publicMetadata.role;
 
-    if (!userRole && path !== "/farm/dashboard") {
-      console.log("Redirecting user without role to farm");
-      return NextResponse.redirect(new URL("/farm/dashboard", req.url));
+      if (path.startsWith("/admin")) {
+        if (userRole !== "admin") {
+          return NextResponse.redirect(new URL("/farm/dashboard", req.url));
+        }
+        return NextResponse.next();
+      }
+
+      if (path.startsWith("/farm")) {
+        if (userRole === "admin") {
+          return NextResponse.redirect(new URL("/admin/dashboard", req.url));
+        }
+
+        return NextResponse.next();
+      }
     }
   }
 

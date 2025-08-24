@@ -1,10 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import type React from "react";
-
+import { useAuth } from "@clerk/nextjs";
+import {
+  useSheep,
+  useDeleteSheep,
+  useSearchSheep,
+} from "@/lib/hooks/use-sheep";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -20,33 +27,37 @@ import {
   ChevronRight,
   Eye,
   Edit,
+  Search,
 } from "lucide-react";
 
 interface SheepListProps {
-  sheep: any[];
-  loading: boolean;
-  currentPage: number;
-  totalPages: number;
-  totalCount: number;
   onAddSheep: () => void;
   onEditSheep: (id: string) => void;
-  onDeleteSheep: (id: string) => void;
   onSheepClick: (id: string) => void;
-  onPageChange: (page: number) => void;
 }
 
 export function SheepList({
-  sheep,
-  loading,
-  currentPage,
-  totalPages,
-  totalCount,
   onAddSheep,
   onEditSheep,
-  onDeleteSheep,
   onSheepClick,
-  onPageChange,
 }: SheepListProps) {
+  const { userId } = useAuth();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const limit = 10;
+
+  const { data, isLoading, isError } = useSheep(
+    currentPage,
+    limit,
+    userId as string
+  );
+  const { data: searchResults } = useSearchSheep(searchTerm, userId as string);
+  const deleteSheepMutation = useDeleteSheep();
+
+  const sheep = searchTerm ? searchResults : data?.sheep || [];
+  const totalCount = data?.totalCount || 0;
+  const totalPages = data?.totalPages || 0;
+
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString();
@@ -74,7 +85,7 @@ export function SheepList({
         "Are you sure you want to delete this sheep? This action cannot be undone."
       )
     ) {
-      onDeleteSheep(id);
+      deleteSheepMutation.mutate(id);
     }
   };
 
@@ -88,21 +99,41 @@ export function SheepList({
     onSheepClick(id);
   };
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   return (
     <Card className="bg-white">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Sheep Inventory ({totalCount})</CardTitle>
-        <Button onClick={onAddSheep} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Add Sheep
-        </Button>
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search by tag..."
+              className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[320px]"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <Button onClick={onAddSheep} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Add Sheep
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="bg-white">
-        {loading ? (
+        {isLoading ? (
           <div className="text-center py-8 text-muted-foreground">
             <p>Loading sheep...</p>
           </div>
-        ) : sheep.length === 0 ? (
+        ) : isError ? (
+          <div className="text-center py-8 text-red-500">
+            <p>Error loading sheep data.</p>
+          </div>
+        ) : sheep?.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <p>No sheep added yet. Click "Add Sheep" to get started.</p>
           </div>
@@ -125,7 +156,7 @@ export function SheepList({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sheep.map((animal) => (
+                  {sheep?.map((animal: any) => (
                     <TableRow
                       key={animal.id}
                       className={`cursor-pointer transition-colors hover:bg-muted/50 ${
@@ -225,6 +256,7 @@ export function SheepList({
                             onClick={(e) => handleDeleteClick(e, animal.id)}
                             className="h-8 w-8 p-0 text-red-600 hover:text-red-800 hover:bg-red-50"
                             title="Delete Sheep"
+                            disabled={deleteSheepMutation.isPending}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -236,7 +268,7 @@ export function SheepList({
               </Table>
             </div>
 
-            {totalPages > 1 && (
+            {totalPages > 1 && !searchTerm && (
               <div className="flex items-center justify-between mt-6 pt-4 border-t">
                 <div className="text-sm text-muted-foreground">
                   Page {currentPage} of {totalPages} ({totalCount} total sheep)
@@ -245,7 +277,7 @@ export function SheepList({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => onPageChange(currentPage - 1)}
+                    onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
                   >
                     <ChevronLeft className="h-4 w-4" />
@@ -254,7 +286,7 @@ export function SheepList({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => onPageChange(currentPage + 1)}
+                    onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
                   >
                     Next
