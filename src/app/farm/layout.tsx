@@ -1,4 +1,5 @@
 import { SignedIn, UserButton } from "@clerk/nextjs";
+import { QueryProvider } from "@/lib/QueryProvider";
 
 export default function RootLayout({
   children,
@@ -26,7 +27,9 @@ export default function RootLayout({
       </header>
 
       {/* Main content */}
-      <main className="flex-1 container mx-auto py-6">{children}</main>
+      <main className="flex-1 container mx-auto py-6">
+        <QueryProvider>{children}</QueryProvider>
+      </main>
     </div>
   );
 }

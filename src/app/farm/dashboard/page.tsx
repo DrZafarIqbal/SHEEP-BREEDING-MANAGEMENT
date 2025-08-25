@@ -1,12 +1,12 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { SheepList } from "@/components/sheep-list";
 import { SheepForm } from "@/components/farm/sheep-form";
 import { useAuth } from "@clerk/nextjs";
-import { loadCounts } from "@/lib/api/counts-api";
+import { getSheepCounts } from "@/lib/api/counts-api";
+import CountCards from "@/components/farm/count-cards";
 
 export default function FarmDashboardPage() {
   const [showForm, setShowForm] = useState(false);
@@ -14,8 +14,8 @@ export default function FarmDashboardPage() {
     undefined
   );
   const [sheepCount, setSheepCount] = useState(0);
-  const [transferCount, setTransferCount] = useState(0);
-  const [recievedCount, setRecievedCount] = useState(0);
+  const [sentCount, setSentCount] = useState(0);
+  const [receivedCount, setReceivedCount] = useState(0);
 
   const router = useRouter();
   const { userId } = useAuth();
@@ -25,10 +25,10 @@ export default function FarmDashboardPage() {
       return;
     }
     (async () => {
-      const counts = await loadCounts(userId);
-      setSheepCount(counts.sheepCount ?? 0);
-      setTransferCount(counts.transferCount ?? 0);
-      setRecievedCount(counts.recievedCount ?? 0);
+      const counts = await getSheepCounts(userId);
+      setSheepCount(counts.total.total);
+      setSentCount(counts.transfers.sent);
+      setReceivedCount(counts.transfers.received);
     })();
   }, [userId]);
 
@@ -64,21 +64,25 @@ export default function FarmDashboardPage() {
           </p>
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-4 rounded-lg border bg-gray-50">
               <p className="text-sm text-muted-foreground">Total Sheep</p>
               <p className="text-2xl font-bold">{sheepCount}</p>
             </div>
 
             <div className="p-4 rounded-lg border bg-gray-50">
-              <p className="text-sm text-muted-foreground">Transfer Count</p>
-              <p className="text-2xl font-bold">{transferCount}</p>
+              <p className="text-sm text-muted-foreground">Sent Transfers</p>
+              <p className="text-2xl font-bold">{sentCount}</p>
             </div>
 
             <div className="p-4 rounded-lg border bg-gray-50">
-              <p className="text-sm text-muted-foreground">Recieved Count</p>
-              <p className="text-2xl font-bold">{recievedCount}</p>
+              <p className="text-sm text-muted-foreground">Received Transfers</p>
+              <p className="text-2xl font-bold">{receivedCount}</p>
             </div>
+          </div>
+
+          <div className="mt-4">
+            <CountCards />
           </div>
         </CardContent>
       </Card>
