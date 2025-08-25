@@ -76,7 +76,7 @@ export const getSheepCounts = async (userId: string): Promise<SheepCounts> => {
   };
 
   sheep.forEach((s: any) => {
-    const birthDate = new Date(s.date_of_birth);
+    const birthDate = new Date(s.dob);
     const now = new Date();
 
     // Calculate the exact age in months
@@ -95,7 +95,7 @@ export const getSheepCounts = async (userId: string): Promise<SheepCounts> => {
 
     if (ageInMonths <= 6) {
       counts.lambs.total++;
-      if (s.gender === "male") {
+      if (s.gender.toLowerCase() === "male") {
         counts.lambs.male++;
       } else {
         counts.lambs.female++;
